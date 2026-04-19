@@ -5,7 +5,6 @@ No API key required.
 """
 from __future__ import annotations
 import logging
-import re
 import time
 from datetime import date
 
@@ -63,7 +62,6 @@ STATUS_MAP = {
 
 def _detect_verticals(agencies: list[str], title: str, abstract: str) -> list[tuple[str, int, bool]]:
     text = (title + " " + abstract).lower()
-    agency_text = " ".join(agencies).lower()
 
     vertical_scores: dict[str, int] = {}
 
