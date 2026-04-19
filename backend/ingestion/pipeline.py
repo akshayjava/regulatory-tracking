@@ -69,20 +69,14 @@ class IngestionPipeline:
         conn.commit()
         return cur.lastrowid
 
-    def _save_regulation(self, conn: sqlite3.Connection, reg: dict) -> str:
-        """Upsert a regulation. Returns 'new', 'updated', or 'skipped'."""
-        cur = conn.cursor()
-
-        # Ensure regulation_id
-        if not reg.get("regulation_id"):
-            reg["regulation_id"] = normalize_regulation_id(
-                reg.get("title", ""), reg.get("source", "unknown"), reg.get("published_date", "")
-            )
-
-        if is_duplicate(reg, conn):
-            return "skipped"
-
-        agency_id = self._get_or_create_agency(conn, reg.get("agency", ""))
+    def _upsert_regulation_record(
+        self, cur: sqlite3.Cursor, reg: dict, agency_id: int | None
+    ) -> tuple[int, bool]:
+        """Insert or update a regulation record and return its DB ID and a boolean indicating if it's new."""
+        # Check if it already exists to determine if it's new or an update
+        cur.execute("SELECT id FROM regulations WHERE regulation_id=?", (reg["regulation_id"],))
+        existing_row = cur.fetchone()
+        is_new = existing_row is None
 
         cur.execute(
             """INSERT INTO regulations
@@ -114,16 +108,15 @@ class IngestionPipeline:
             ),
         )
 
-        is_new = cur.rowcount == 1 or conn.execute(
-            "SELECT changes()"
-        ).fetchone()[0] > 0
-
         reg_db_id = cur.execute(
             "SELECT id FROM regulations WHERE regulation_id=?", (reg["regulation_id"],)
         ).fetchone()[0]
 
-        # Verticals
-        for vertical, score, critical in reg.get("verticals", []):
+        return reg_db_id, is_new
+
+    def _insert_verticals(self, cur: sqlite3.Cursor, reg_db_id: int, verticals: list) -> None:
+        """Insert regulation verticals."""
+        for vertical, score, critical in verticals:
             cur.execute(
                 """INSERT OR IGNORE INTO regulation_verticals
                    (regulation_id, vertical, relevance_score, is_critical)
@@ -131,7 +124,8 @@ class IngestionPipeline:
                 (reg_db_id, vertical, score, 1 if critical else 0),
             )
 
-        # Update record
+    def _insert_update_record(self, cur: sqlite3.Cursor, reg_db_id: int, reg: dict) -> None:
+        """Insert a regulation update record."""
         urgency = _detect_urgency(reg)
         cur.execute(
             """INSERT INTO regulation_updates (regulation_id, update_type, urgency)
@@ -139,8 +133,28 @@ class IngestionPipeline:
             (reg_db_id, "new_regulation", urgency),
         )
 
+    def _save_regulation(self, conn: sqlite3.Connection, reg: dict) -> str:
+        """Upsert a regulation. Returns 'new', 'updated', or 'skipped'."""
+        cur = conn.cursor()
+
+        # Ensure regulation_id
+        if not reg.get("regulation_id"):
+            reg["regulation_id"] = normalize_regulation_id(
+                reg.get("title", ""), reg.get("source", "unknown"), reg.get("published_date", "")
+            )
+
+        if is_duplicate(reg, conn):
+            return "skipped"
+
+        agency_id = self._get_or_create_agency(conn, reg.get("agency", ""))
+
+        reg_db_id, is_new = self._upsert_regulation_record(cur, reg, agency_id)
+
+        self._insert_verticals(cur, reg_db_id, reg.get("verticals", []))
+        self._insert_update_record(cur, reg_db_id, reg)
+
         conn.commit()
-        return "new"
+        return "new" if is_new else "updated"
 
     def run(self, source_name: str | None = None) -> dict[str, Any]:
         """Run ingestion for all sources (or a specific one). Returns stats dict."""
