@@ -3,6 +3,7 @@ Congress.gov API ingestion source.
 API docs: https://api.congress.gov/
 Free API key: https://api.congress.gov/sign-up/
 """
+from __future__ import annotations
 import logging
 import os
 import re

@@ -2,7 +2,7 @@
 Pydantic models for LATTICE API request/response schemas.
 """
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -15,39 +15,39 @@ class VerticalInfo(BaseModel):
 
 class RegulationBase(BaseModel):
     title: str
-    summary: str | None = None
+    summary: Optional[str] = None
     type: str
     status: str
     source: str
-    published_date: date | None = None
-    effective_date: date | None = None
-    deadline_date: date | None = None
-    complexity_score: int | None = Field(None, ge=1, le=10)
-    impact_score: int | None = Field(None, ge=1, le=10)
-    citation: str | None = None
+    published_date: Optional[date] = None
+    effective_date: Optional[date] = None
+    deadline_date: Optional[date] = None
+    complexity_score: Optional[int] = Field(None, ge=1, le=10)
+    impact_score: Optional[int] = Field(None, ge=1, le=10)
+    citation: Optional[str] = None
 
 
 class RegulationCreate(RegulationBase):
     regulation_id: str
-    affected_entities: list[str] = []
-    keywords: list[str] = []
-    agency_id: int | None = None
+    affected_entities: List[str] = []
+    keywords: List[str] = []
+    agency_id: Optional[int] = None
 
 
 class RegulationResponse(RegulationBase):
     id: int
     regulation_id: str
-    affected_entities: list[str] = []
-    keywords: list[str] = []
-    verticals: list[VerticalInfo] = []
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+    affected_entities: List[str] = []
+    keywords: List[str] = []
+    verticals: List[VerticalInfo] = []
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
 
 
 class RegulationListResponse(BaseModel):
-    items: list[RegulationResponse]
+    items: List[RegulationResponse]
     total: int
     page: int
     page_size: int
@@ -66,23 +66,23 @@ class DeadlineAlert(BaseModel):
     deadline_date: date
     days_until: int
     urgency: str
-    verticals: list[str]
-    impact_score: int | None = None
+    verticals: List[str]
+    impact_score: Optional[int] = None
 
 
 class SourceStatus(BaseModel):
     name: str
     abbreviation: str
-    last_sync: datetime | None = None
+    last_sync: Optional[datetime] = None
     status: str
     regulation_count: int
 
 
 class DashboardStats(BaseModel):
     total_regulations: int
-    by_status: dict[str, int]
-    by_vertical: dict[str, int]
-    by_agency: dict[str, int]
+    by_status: Dict[str, int]
+    by_vertical: Dict[str, int]
+    by_agency: Dict[str, int]
     deadlines_30_days: int
     deadlines_90_days: int
-    sources: list[SourceStatus]
+    sources: List[SourceStatus]

@@ -3,6 +3,7 @@ Federal Register API ingestion source.
 API docs: https://www.federalregister.gov/developers/api/v1
 No API key required.
 """
+from __future__ import annotations
 import logging
 import re
 import time

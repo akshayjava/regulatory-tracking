@@ -3,7 +3,7 @@ Regulations router — CRUD, filtering, stats.
 """
 import json
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -25,7 +25,6 @@ VALID_STATUSES = {"proposed", "final", "effective", "withdrawn", "superseded"}
 
 
 def _build_regulation_response(row: dict, conn) -> RegulationResponse:
-    """Attach verticals to a regulation row dict."""
     reg_id = row["id"]
     cur = conn.execute(
         "SELECT vertical, relevance_score, is_critical FROM regulation_verticals WHERE regulation_id=?",
@@ -86,7 +85,7 @@ def get_stats():
         )
 
 
-@router.get("/alerts/deadlines", response_model=list[DeadlineAlert])
+@router.get("/alerts/deadlines", response_model=List[DeadlineAlert])
 def get_deadline_alerts(days: int = Query(30, ge=1, le=365)):
     today = date.today()
     cutoff = (today + timedelta(days=days)).isoformat()
@@ -104,7 +103,6 @@ def get_deadline_alerts(days: int = Query(30, ge=1, le=365)):
             dl = date.fromisoformat(row[2])
             days_until = (dl - today).days
             urgency = "critical" if days_until <= 30 else "high" if days_until <= 60 else "medium"
-
             reg_row = conn.execute("SELECT id FROM regulations WHERE regulation_id=?", (row[0],)).fetchone()
             verticals = []
             if reg_row:
@@ -112,7 +110,6 @@ def get_deadline_alerts(days: int = Query(30, ge=1, le=365)):
                     "SELECT vertical FROM regulation_verticals WHERE regulation_id=?", (reg_row[0],)
                 ).fetchall()
                 verticals = [v[0] for v in v_rows]
-
             alerts.append(DeadlineAlert(
                 regulation_id=row[0], title=row[1], deadline_date=dl,
                 days_until=days_until, urgency=urgency, verticals=verticals,
@@ -121,7 +118,7 @@ def get_deadline_alerts(days: int = Query(30, ge=1, le=365)):
         return alerts
 
 
-@router.get("/vertical/{vertical_name}", response_model=list[RegulationResponse])
+@router.get("/vertical/{vertical_name}", response_model=List[RegulationResponse])
 def get_by_vertical(vertical_name: str, limit: int = Query(50, le=100)):
     if vertical_name not in VALID_VERTICALS:
         raise HTTPException(400, f"Invalid vertical. Valid: {sorted(VALID_VERTICALS)}")
@@ -130,7 +127,7 @@ def get_by_vertical(vertical_name: str, limit: int = Query(50, le=100)):
             """SELECT r.* FROM regulations r
                JOIN regulation_verticals rv ON r.id = rv.regulation_id
                WHERE rv.vertical = ?
-               ORDER BY r.impact_score DESC NULLS LAST
+               ORDER BY r.impact_score DESC
                LIMIT ?""",
             (vertical_name, limit),
         ).fetchall()
@@ -150,11 +147,11 @@ def get_regulation(regulation_id_slug: str):
 
 @router.get("/", response_model=RegulationListResponse)
 def list_regulations(
-    vertical: str | None = None,
-    status: str | None = None,
-    agency: str | None = None,
-    search: str | None = None,
-    deadline_within_days: int | None = Query(None, ge=1, le=365),
+    vertical: Optional[str] = None,
+    status: Optional[str] = None,
+    agency: Optional[str] = None,
+    search: Optional[str] = None,
+    deadline_within_days: Optional[int] = Query(None, ge=1, le=365),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
@@ -164,20 +161,16 @@ def list_regulations(
         raise HTTPException(400, f"Invalid status. Valid: {sorted(VALID_STATUSES)}")
 
     where_clauses = []
-    params: list[Any] = []
+    params: List[Any] = []
 
     if vertical:
-        where_clauses.append(
-            "r.id IN (SELECT regulation_id FROM regulation_verticals WHERE vertical=?)"
-        )
+        where_clauses.append("r.id IN (SELECT regulation_id FROM regulation_verticals WHERE vertical=?)")
         params.append(vertical)
     if status:
         where_clauses.append("r.status=?")
         params.append(status)
     if agency:
-        where_clauses.append(
-            "r.agency_id IN (SELECT id FROM agencies WHERE abbreviation=? OR name LIKE ?)"
-        )
+        where_clauses.append("r.agency_id IN (SELECT id FROM agencies WHERE abbreviation=? OR name LIKE ?)")
         params.extend([agency, f"%{agency}%"])
     if search:
         where_clauses.append("(r.title LIKE ? OR r.summary LIKE ?)")
@@ -192,22 +185,14 @@ def list_regulations(
     offset = (page - 1) * page_size
 
     with get_db() as conn:
-        total = conn.execute(
-            f"SELECT COUNT(*) FROM regulations r {where_sql}", params
-        ).fetchone()[0]
-
+        total = conn.execute(f"SELECT COUNT(*) FROM regulations r {where_sql}", params).fetchone()[0]
         rows = conn.execute(
-            f"SELECT r.* FROM regulations r {where_sql} ORDER BY r.impact_score DESC NULLS LAST LIMIT ? OFFSET ?",
+            f"SELECT r.* FROM regulations r {where_sql} ORDER BY r.impact_score DESC LIMIT ? OFFSET ?",
             params + [page_size, offset],
         ).fetchall()
-
         items = [_build_regulation_response(row_to_dict(r), conn) for r in rows]
-
         return RegulationListResponse(
-            items=items,
-            total=total,
-            page=page,
-            page_size=page_size,
+            items=items, total=total, page=page, page_size=page_size,
             total_pages=(total + page_size - 1) // page_size,
         )
 
@@ -233,9 +218,7 @@ def create_regulation(reg: RegulationCreate):
             ),
         )
         conn.commit()
-        row = conn.execute(
-            "SELECT * FROM regulations WHERE id=?", (cur.lastrowid,)
-        ).fetchone()
+        row = conn.execute("SELECT * FROM regulations WHERE id=?", (cur.lastrowid,)).fetchone()
         return _build_regulation_response(row_to_dict(row), conn)
 
 

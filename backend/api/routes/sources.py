@@ -1,6 +1,7 @@
 """
 Sources router — regulatory source health and manual sync.
 """
+from __future__ import annotations
 import sys
 import os
 from fastapi import APIRouter, HTTPException

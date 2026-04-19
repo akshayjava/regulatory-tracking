@@ -2,6 +2,7 @@
 LATTICE Ingestion Pipeline
 Orchestrates all regulatory sources, deduplicates, and persists to SQLite.
 """
+from __future__ import annotations
 import json
 import logging
 import os
