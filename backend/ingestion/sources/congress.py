@@ -6,9 +6,8 @@ Free API key: https://api.congress.gov/sign-up/
 from __future__ import annotations
 import logging
 import os
-import re
 import time
-from datetime import date, datetime
+from datetime import date
 
 import requests
 
