@@ -30,7 +30,7 @@ def is_duplicate(reg: dict, conn: sqlite3.Connection) -> bool:
     cur = conn.cursor()
 
     # Exact slug match
-    cur.execute("SELECT id FROM regulations WHERE regulation_id = ?", (reg["regulation_id"],))
+    cur.execute("SELECT id FROM regulations WHERE regulation_id = ?", (reg.get("regulation_id"),))
     if cur.fetchone():
         return True
 
