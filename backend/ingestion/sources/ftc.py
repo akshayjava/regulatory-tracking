@@ -1,5 +1,6 @@
 """
-Federal Register API ingestion source.
+Federal Trade Commission (FTC) API ingestion source.
+Uses the Federal Register API filtered by FTC agency.
 API docs: https://www.federalregister.gov/developers/api/v1
 No API key required.
 """
@@ -13,28 +14,6 @@ import requests
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.federalregister.gov/api/v1/documents.json"
-
-AGENCY_VERTICAL_MAP = {
-    "financial crimes enforcement network": "fintech",
-    "fincen": "crypto",
-    "securities and exchange commission": "fintech",
-    "sec": "fintech",
-    "food and drug administration": "healthcare",
-    "fda": "healthcare",
-    "centers for medicare": "healthcare",
-    "cms": "healthcare",
-    "department of health": "healthcare",
-    "hhs": "healthcare",
-    "consumer financial protection": "fintech",
-    "cfpb": "fintech",
-    "federal trade commission": "saas",
-    "ftc": "saas",
-    "office of the comptroller": "fintech",
-    "occ": "fintech",
-    "national association of insurance": "insurance",
-    "internal revenue": "fintech",
-    "irs": "fintech",
-}
 
 VERTICAL_KEYWORDS = {
     "crypto": ["cryptocurrency", "virtual currency", "digital asset", "blockchain", "bitcoin", "stablecoin"],
@@ -60,17 +39,14 @@ STATUS_MAP = {
 }
 
 
-def _detect_verticals(agencies: list[str], title: str, abstract: str) -> list[tuple[str, int, bool]]:
+def _detect_verticals(title: str, abstract: str) -> list[tuple[str, int, bool]]:
     text = (title + " " + abstract).lower()
-    # agency_text = " ".join(agencies).lower()
 
     vertical_scores: dict[str, int] = {}
 
-    for agency in agencies:
-        a_lower = agency.lower()
-        for key, vertical in AGENCY_VERTICAL_MAP.items():
-            if key in a_lower:
-                vertical_scores[vertical] = vertical_scores.get(vertical, 0) + 4
+    # Base FTC documents have relevance to SaaS/Privacy and Fintech often
+    vertical_scores["saas"] = 4
+    vertical_scores["fintech"] = 2
 
     for vertical, keywords in VERTICAL_KEYWORDS.items():
         hits = sum(1 for kw in keywords if kw in text)
@@ -91,15 +67,14 @@ def _doc_to_regulation(doc: dict) -> dict | None:
             return None
 
         doc_number = doc.get("document_number", "").replace("/", "_").replace(" ", "_")
-        reg_id = f"fedreg_{doc_number}".lower()
+        reg_id = f"ftc_{doc_number}".lower()
 
-        agencies = [a.get("name", "") for a in doc.get("agencies", [])]
         abstract = doc.get("abstract") or ""
         doc_type = doc.get("type", "Rule")
 
-        verticals = _detect_verticals(agencies, title, abstract)
+        verticals = _detect_verticals(title, abstract)
         if not verticals:
-            return None
+            verticals = [("saas", 5, False)]
 
         pub_date = doc.get("publication_date", str(date.today()))
         effective_date = doc.get("effective_on")
@@ -109,7 +84,7 @@ def _doc_to_regulation(doc: dict) -> dict | None:
             "title": title[:500],
             "type": DOC_TYPE_MAP.get(doc_type, "notice"),
             "status": STATUS_MAP.get(doc_type, "proposed"),
-            "source": "federal_register",
+            "source": "ftc",
             "summary": abstract[:1000] or title,
             "published_date": pub_date,
             "effective_date": effective_date,
@@ -120,32 +95,33 @@ def _doc_to_regulation(doc: dict) -> dict | None:
             "keywords": [],
             "citation": doc.get("citation", doc_number),
             "verticals": verticals,
+            "agency": "FTC"
         }
     except Exception as e:
-        logger.warning(f"Failed to parse FR document: {e}")
+        logger.warning(f"Failed to parse FTC document: {e}")
         return None
 
 
-class FederalRegisterSource:
-    """Fetches regulatory documents from the Federal Register API."""
+class FtcSource:
+    """Fetches regulatory documents from the FTC via Federal Register API."""
 
     def __init__(self):
         self.session = requests.Session()
         self.session.headers["User-Agent"] = "LATTICE-RegulatoryPlatform/1.0"
 
     def fetch(self, limit: int = 100) -> list[dict]:
-        """Fetch recent FR documents and return normalized regulation dicts."""
+        """Fetch recent FTC documents and return normalized regulation dicts."""
         regulations = []
         page = 1
 
         while len(regulations) < limit:
             params = {
-                "fields[]": ["title", "abstract", "agencies", "publication_date",
+                "fields[]": ["title", "abstract", "publication_date",
                               "effective_on", "document_number", "type", "citation"],
                 "per_page": 20,
                 "page": page,
                 "order": "newest",
-                "conditions[type][]": ["RULE", "PRORULE", "NOTICE"],
+                "conditions[agencies][]": "federal-trade-commission",
             }
 
             try:
@@ -153,7 +129,7 @@ class FederalRegisterSource:
                 resp.raise_for_status()
                 data = resp.json()
             except requests.RequestException as e:
-                logger.error(f"Federal Register fetch error: {e}")
+                logger.error(f"FTC fetch error: {e}")
                 break
 
             docs = data.get("results", [])
@@ -170,5 +146,5 @@ class FederalRegisterSource:
                 break
             time.sleep(0.3)
 
-        logger.info(f"FederalRegisterSource: fetched {len(regulations)} relevant regulations")
+        logger.info(f"FtcSource: fetched {len(regulations)} relevant regulations")
         return regulations[:limit]

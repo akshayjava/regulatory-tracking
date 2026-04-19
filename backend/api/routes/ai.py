@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 import logging
-from typing import List, Optional
+from typing import Optional
 
 import anthropic
 from fastapi import APIRouter, HTTPException, Query

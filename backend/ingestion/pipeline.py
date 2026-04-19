@@ -7,11 +7,11 @@ import json
 import logging
 import os
 import sqlite3
-from datetime import date, datetime
+from datetime import date
 from typing import Any
 
 from .deduplication import deduplicate, is_duplicate, normalize_regulation_id
-from .sources import CongressSource, FederalRegisterSource, HealthcareSource, LegiScanSource
+from .sources import CongressSource, FederalRegisterSource, HealthcareSource, LegiScanSource, SecSource, FtcSource
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,8 @@ class IngestionPipeline:
             "federal_register": FederalRegisterSource(),
             "healthcare": HealthcareSource(),
             "legiscan": LegiScanSource(),
+            "sec": SecSource(),
+            "ftc": FtcSource(),
         }
         self._stats = {"new": 0, "updated": 0, "skipped": 0, "errors": 0}
 
@@ -114,9 +116,9 @@ class IngestionPipeline:
             ),
         )
 
-        is_new = cur.rowcount == 1 or conn.execute(
-            "SELECT changes()"
-        ).fetchone()[0] > 0
+        # is_new = cur.rowcount == 1 or conn.execute(
+        #     "SELECT changes()"
+        # ).fetchone()[0] > 0
 
         reg_db_id = cur.execute(
             "SELECT id FROM regulations WHERE regulation_id=?", (reg["regulation_id"],)

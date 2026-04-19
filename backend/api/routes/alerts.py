@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Query
 
-from ..database import get_db, row_to_dict
+from ..database import get_db
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
