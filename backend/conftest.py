@@ -40,9 +40,9 @@ def clean_db(setup_test_db):
     db_path = setup_test_db
     with sqlite3.connect(db_path) as conn:
         conn.execute("PRAGMA foreign_keys = OFF;")
-        # Clear specific tables
-        tables = ["regulations", "regulation_verticals", "agencies", "regulatory_sources", "regulation_updates", "regulation_history", "regulation_entities", "regulation_annotations"]
-        for table in tables:
-            conn.execute(f"DELETE FROM {table}")
+        # Dynamically clear all user tables
+        cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name != 'sqlite_sequence'")
+        for row in cursor.fetchall():
+            conn.execute(f"DELETE FROM {row[0]}")
         conn.execute("PRAGMA foreign_keys = ON;")
         conn.commit()
