@@ -1,5 +1,5 @@
 import pytest
-from backend.ingestion.deduplication import _title_similarity
+from ingestion.deduplication import _title_similarity
 
 def test_title_similarity_identical():
     assert _title_similarity("Financial Regulation A", "Financial Regulation A") == 1.0
