@@ -1,0 +1,6 @@
+backend/.venv/
+backend/lattice.db*
+data/
+frontend/node_modules/
+__pycache__/
+*.pyc

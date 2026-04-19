@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from .database import get_regulation_count, init_db
+from .routes.ai import router as ai_router
 from .routes.alerts import router as alerts_router
 from .routes.regulations import router as regulations_router
 from .routes.sources import router as sources_router
@@ -24,8 +25,12 @@ app = FastAPI(
         {"name": "regulations", "description": "Regulation search, filtering, and CRUD"},
         {"name": "alerts", "description": "Deadline alerts and critical updates"},
         {"name": "sources", "description": "Regulatory source health and sync"},
+        {"name": "ai", "description": "AI-powered querying and plain-language annotation"},
     ],
 )
+
+# Global scheduler reference so routes can inspect it
+_scheduler = None
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,6 +43,7 @@ app.add_middleware(
 app.include_router(regulations_router)
 app.include_router(alerts_router)
 app.include_router(sources_router)
+app.include_router(ai_router)
 
 
 @app.on_event("startup")
@@ -48,11 +54,12 @@ async def startup():
     logger.info(f"Database ready — {count} regulations loaded")
 
     # Start background scheduler
+    global _scheduler
     try:
         from ingestion.pipeline import IngestionPipeline
         from ingestion.scheduler import start_scheduler
         pipeline = IngestionPipeline()
-        start_scheduler(pipeline)
+        _scheduler = start_scheduler(pipeline)
         logger.info("Background scheduler started (daily sync at 06:00 UTC)")
     except Exception as e:
         logger.warning(f"Scheduler not started: {e}")

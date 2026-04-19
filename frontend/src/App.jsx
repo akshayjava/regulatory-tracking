@@ -3,6 +3,8 @@ import { AlertCircle } from 'lucide-react'
 import Dashboard from './components/Dashboard'
 import RegulationList from './components/RegulationList'
 import Analysis from './components/Analysis'
+import AIQuery from './components/AIQuery'
+import SourceMonitor from './components/SourceMonitor'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -12,6 +14,8 @@ const TABS = [
   { id: 'dashboard', label: '📊 Dashboard' },
   { id: 'regulations', label: '📋 Regulations' },
   { id: 'analysis', label: '📈 Analysis' },
+  { id: 'ai', label: '🤖 Ask AI' },
+  { id: 'monitor', label: '⚙️ Monitor' },
 ]
 
 export default function App() {
@@ -70,6 +74,8 @@ export default function App() {
         {activeTab === 'dashboard' && <Dashboard apiBase={API_BASE} />}
         {activeTab === 'regulations' && <RegulationList apiBase={API_BASE} />}
         {activeTab === 'analysis' && <Analysis apiBase={API_BASE} />}
+        {activeTab === 'ai' && <AIQuery apiBase={API_BASE} />}
+        {activeTab === 'monitor' && <SourceMonitor apiBase={API_BASE} />}
       </div>
 
       {/* Footer */}

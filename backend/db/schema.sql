@@ -134,6 +134,20 @@ CREATE INDEX IF NOT EXISTS idx_entities_reg_id ON regulation_entities(regulation
 CREATE INDEX IF NOT EXISTS idx_entities_type   ON regulation_entities(entity_type);
 
 -- ============================================================
+-- 8. REGULATION ANNOTATIONS  (AI-generated plain-language summaries)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS regulation_annotations (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    regulation_id    INTEGER NOT NULL REFERENCES regulations(id) ON DELETE CASCADE UNIQUE,
+    annotation       TEXT NOT NULL,
+    model_used       TEXT,
+    created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_annotations_reg_id ON regulation_annotations(regulation_id);
+
+-- ============================================================
 -- TRIGGER: auto-update regulations.updated_at
 -- ============================================================
 CREATE TRIGGER IF NOT EXISTS trg_regulations_updated_at

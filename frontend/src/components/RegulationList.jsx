@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { AlertCircle, CheckCircle, Clock, Download, Search, Zap } from 'lucide-react'
+import { AlertCircle, Bot, CheckCircle, Clock, Download, Search, Zap } from 'lucide-react'
 
 const VERTICALS = ['all', 'crypto', 'fintech', 'healthcare', 'insurance', 'saas']
 const STATUSES = ['all', 'proposed', 'final', 'effective']
@@ -27,6 +27,109 @@ function useDebounce(value, delay) {
   return debounced
 }
 
+function AIAnnotation({ apiBase, regulationId }) {
+  const [annotation, setAnnotation] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function load() {
+    setLoading(true)
+    setError(null)
+    try {
+      // Try cache first
+      const resp = await fetch(`${apiBase}/ai/annotation/${regulationId}`)
+      if (resp.ok) {
+        const d = await resp.json()
+        setAnnotation(d)
+      } else if (resp.status === 404) {
+        // Generate new annotation
+        const gen = await fetch(`${apiBase}/ai/annotate/${regulationId}`, { method: 'POST' })
+        if (!gen.ok) {
+          const e = await gen.json().catch(() => ({ detail: gen.statusText }))
+          throw new Error(e.detail || 'Annotation failed')
+        }
+        setAnnotation(await gen.json())
+      } else {
+        throw new Error('Failed to load annotation')
+      }
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!annotation && !loading && !error) {
+    return (
+      <button
+        onClick={load}
+        style={{
+          background: 'none',
+          border: '1px solid #4f46e5',
+          borderRadius: 6,
+          color: '#818cf8',
+          padding: '4px 10px',
+          cursor: 'pointer',
+          fontSize: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+        }}
+      >
+        <Bot size={12} /> AI Explain
+      </button>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div style={{
+        marginTop: 12, padding: '12px 14px',
+        background: '#0f172a', borderRadius: 8,
+        border: '1px solid #312e81',
+        color: '#818cf8', fontSize: 13,
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}>
+        <Bot size={14} style={{ animation: 'pulse 1.5s infinite' }} />
+        Claude is reading this regulation...
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={{
+        marginTop: 12, padding: '10px 14px',
+        background: '#1c0a0a', borderRadius: 8,
+        border: '1px solid #7f1d1d',
+        color: '#f87171', fontSize: 12,
+      }}>
+        {error.includes('ANTHROPIC_API_KEY')
+          ? 'Set ANTHROPIC_API_KEY to enable AI annotations.'
+          : error}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      marginTop: 12, padding: '14px 16px',
+      background: '#0f172a', borderRadius: 8,
+      border: '1px solid #312e81',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+        <Bot size={14} color="#818cf8" />
+        <span style={{ fontSize: 12, color: '#818cf8', fontWeight: 600 }}>
+          AI Annotation {annotation?.cached ? '(cached)' : '(just generated)'}
+        </span>
+      </div>
+      <div style={{ color: '#cbd5e1', fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+        {annotation?.annotation}
+      </div>
+    </div>
+  )
+}
+
 export default function RegulationList({ apiBase }) {
   const [vertical, setVertical] = useState('all')
   const [status, setStatus] = useState('all')
@@ -34,7 +137,17 @@ export default function RegulationList({ apiBase }) {
   const [page, setPage] = useState(1)
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [expandedAnnotations, setExpandedAnnotations] = useState(new Set())
   const debouncedSearch = useDebounce(search, 300)
+
+  function toggleAnnotation(id) {
+    setExpandedAnnotations(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   useEffect(() => { setPage(1) }, [vertical, status, debouncedSearch])
 
@@ -168,6 +281,33 @@ export default function RegulationList({ apiBase }) {
                   ⏰ Deadline: {new Date(reg.deadline_date).toLocaleDateString()}
                   {reg.citation && <span style={{ marginLeft: 16 }}>📄 {reg.citation}</span>}
                 </div>
+              )}
+
+              {/* AI Annotation toggle */}
+              <div style={{ marginTop: 10 }}>
+                <button
+                  onClick={() => toggleAnnotation(reg.regulation_id)}
+                  style={{
+                    background: 'none',
+                    border: '1px solid',
+                    borderColor: expandedAnnotations.has(reg.regulation_id) ? '#4f46e5' : '#334155',
+                    borderRadius: 6,
+                    color: expandedAnnotations.has(reg.regulation_id) ? '#818cf8' : '#64748b',
+                    padding: '4px 10px',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <Bot size={12} />
+                  {expandedAnnotations.has(reg.regulation_id) ? 'Hide AI Explanation' : 'AI Explain'}
+                </button>
+              </div>
+
+              {expandedAnnotations.has(reg.regulation_id) && (
+                <AIAnnotation apiBase={apiBase} regulationId={reg.regulation_id} />
               )}
             </div>
           ))}

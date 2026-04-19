@@ -7,7 +7,8 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-DB_PATH = os.environ.get("DB_PATH", "lattice.db")
+_DEFAULT_DB = str(Path(__file__).parent.parent / "lattice.db")
+DB_PATH = os.environ.get("DB_PATH", _DEFAULT_DB)
 SCHEMA_PATH = Path(__file__).parent.parent / "db" / "schema.sql"
 
 
