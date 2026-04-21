@@ -1,19 +1,16 @@
 import pytest
 from backend.ingestion.deduplication import normalize_regulation_id
 
-def test_normalize_regulation_id_basic():
-    """Test basic functionality with typical input."""
-    assert normalize_regulation_id("A basic title", "source1", "2023-01-01") == "source1_a_basic_title_2023"
-
-def test_normalize_regulation_id_special_characters():
-    """Test that special characters are removed."""
-    assert normalize_regulation_id("Title with special characters: !@#$%^&*()_+", "source_a", "2022-05-10") == "source_a_title_with_special_characters_2022"
-    assert normalize_regulation_id("Another-title[here]", "source_b", "2024-11-20") == "source_b_anothertitlehere_2024"
-
-def test_normalize_regulation_id_whitespace():
-    """Test that multiple spaces are converted to single underscores and leading/trailing whitespace is handled."""
-    assert normalize_regulation_id("  Lots   of    spaces  ", "source_x", "2021-02-02") == "source_x_lots_of_spaces_2021"
-    assert normalize_regulation_id("\tTabs\nand\rnewlines\n", "source_y", "2020-10-10") == "source_y_tabs_and_newlines_2020"
+@pytest.mark.parametrize("title, source, date, expected", [
+    ("A basic title", "source1", "2023-01-01", "source1_a_basic_title_2023"),
+    ("Title with special characters: !@#$%^&*()_+", "source_a", "2022-05-10", "source_a_title_with_special_characters_2022"),
+    ("Another-title[here]", "source_b", "2024-11-20", "source_b_anothertitlehere_2024"),
+    ("  Lots   of    spaces  ", "source_x", "2021-02-02", "source_x_lots_of_spaces_2021"),
+    ("\tTabs\nand\rnewlines\n", "source_y", "2020-10-10", "source_y_tabs_and_newlines_2020"),
+])
+def test_normalize_regulation_id_variants(title, source, date, expected):
+    """Test various title and whitespace scenarios."""
+    assert normalize_regulation_id(title, source, date) == expected
 
 def test_normalize_regulation_id_truncation():
     """Test that slugs are truncated to 60 characters and trailing underscores are stripped."""
