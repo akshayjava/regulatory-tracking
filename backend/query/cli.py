@@ -9,7 +9,6 @@ Usage:
   python -m query.cli deadlines --days 30
 """
 import csv
-import json
 import os
 import sqlite3
 import sys
