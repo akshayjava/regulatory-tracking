@@ -1,32 +1,48 @@
 import os
 import tempfile
+import sqlite3
 import pytest
 from fastapi.testclient import TestClient
 
-@pytest.fixture(autouse=True)
+# Mock DB_PATH before importing app so it uses the temporary DB
+@pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
-    fd, path = tempfile.mkstemp()
-    os.close(fd)
+    db_fd, db_path = tempfile.mkstemp()
 
-    os.environ["DB_PATH"] = path
+    # Store original and set new
+    original_db = os.environ.get("DB_PATH")
+    os.environ["DB_PATH"] = db_path
 
-    # Patch module level variable
-    try:
-        from api import database
-        database.DB_PATH = path
-        database.init_db()
-    except ImportError:
-        pass
+    # Needs to be imported after setting DB_PATH so it reads the env var correctly
+    import api.database as db
+    db.DB_PATH = db_path
 
-    yield path
+    db.init_db()
 
-    if os.path.exists(path):
-        os.remove(path)
+    yield db_path
 
-@pytest.fixture
+    os.close(db_fd)
+    os.unlink(db_path)
+    if original_db is not None:
+        os.environ["DB_PATH"] = original_db
+    else:
+        del os.environ["DB_PATH"]
+
+@pytest.fixture(scope="session")
 def client():
-    # Setup test env var before importing app
-    os.environ["ANTHROPIC_API_KEY"] = "test-key"
+    # Import app here so the test DB is fully set up before app initializes
     from api.main import app
-    with TestClient(app) as test_client:
-        yield test_client
+    with TestClient(app) as c:
+        yield c
+
+@pytest.fixture(autouse=True)
+def clean_db(setup_test_db):
+    db_path = setup_test_db
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("PRAGMA foreign_keys = OFF;")
+        # Clear specific tables
+        tables = ["regulations", "regulation_verticals", "agencies", "regulatory_sources", "regulation_updates", "regulation_history", "regulation_entities", "regulation_annotations"]
+        for table in tables:
+            conn.execute(f"DELETE FROM {table}")
+        conn.execute("PRAGMA foreign_keys = ON;")
+        conn.commit()

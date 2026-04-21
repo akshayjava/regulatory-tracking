@@ -6,7 +6,7 @@ Usage: python backend/db/seed_data.py
 import json
 import os
 import sqlite3
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 DB_PATH = os.environ.get("DB_PATH", "lattice.db")
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
@@ -410,6 +410,61 @@ def insert_sources(conn):
     conn.commit()
 
 
+def _insert_base_regulation(cursor, reg, agency_id):
+    cursor.execute(
+        """INSERT OR IGNORE INTO regulations
+           (regulation_id, title, type, status, source, summary,
+            published_date, effective_date, deadline_date,
+            complexity_score, impact_score,
+            affected_entities, keywords, citation, agency_id)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (
+            reg["regulation_id"],
+            reg["title"],
+            reg["type"],
+            reg["status"],
+            reg["source"],
+            reg["summary"],
+            reg.get("published_date"),
+            reg.get("effective_date"),
+            reg.get("deadline_date"),
+            reg["complexity_score"],
+            reg["impact_score"],
+            json.dumps(reg["affected_entities"]),
+            json.dumps(reg["keywords"]),
+            reg.get("citation"),
+            agency_id,
+        ),
+    )
+    return cursor.rowcount > 0, cursor.lastrowid
+
+
+def _insert_verticals(cursor, reg_db_id, reg):
+    for vertical, score, critical in reg.get("verticals", []):
+        cursor.execute(
+            "INSERT OR IGNORE INTO regulation_verticals (regulation_id, vertical, relevance_score, is_critical) VALUES (?,?,?,?)",
+            (reg_db_id, vertical, score, 1 if critical else 0),
+        )
+
+
+def _insert_entities(cursor, reg_db_id, reg):
+    for entity_type, requirements in reg.get("entities", []):
+        cursor.execute(
+            "INSERT INTO regulation_entities (regulation_id, entity_type, compliance_requirements, deadline_date) VALUES (?,?,?,?)",
+            (reg_db_id, entity_type, json.dumps(requirements), reg.get("deadline_date")),
+        )
+
+
+def _insert_initial_update(cursor, reg_db_id, reg):
+    urgency = "critical" if reg.get("deadline_date") and (
+        date.fromisoformat(reg["deadline_date"]) - today
+    ).days <= 30 else "high" if reg["impact_score"] >= 8 else "medium"
+    cursor.execute(
+        "INSERT INTO regulation_updates (regulation_id, update_type, urgency) VALUES (?,?,?)",
+        (reg_db_id, "new_regulation", urgency),
+    )
+
+
 def insert_regulations(conn, agency_ids):
     cursor = conn.cursor()
     reg_counts = {"inserted": 0, "skipped": 0}
@@ -417,60 +472,16 @@ def insert_regulations(conn, agency_ids):
     for reg in REGULATIONS:
         agency_id = agency_ids.get(reg["agency"])
         try:
-            cursor.execute(
-                """INSERT OR IGNORE INTO regulations
-                   (regulation_id, title, type, status, source, summary,
-                    published_date, effective_date, deadline_date,
-                    complexity_score, impact_score,
-                    affected_entities, keywords, citation, agency_id)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (
-                    reg["regulation_id"],
-                    reg["title"],
-                    reg["type"],
-                    reg["status"],
-                    reg["source"],
-                    reg["summary"],
-                    reg.get("published_date"),
-                    reg.get("effective_date"),
-                    reg.get("deadline_date"),
-                    reg["complexity_score"],
-                    reg["impact_score"],
-                    json.dumps(reg["affected_entities"]),
-                    json.dumps(reg["keywords"]),
-                    reg.get("citation"),
-                    agency_id,
-                ),
-            )
-            if cursor.rowcount == 0:
+            inserted, reg_db_id = _insert_base_regulation(cursor, reg, agency_id)
+            if not inserted:
                 reg_counts["skipped"] += 1
                 continue
 
-            reg_db_id = cursor.lastrowid
             reg_counts["inserted"] += 1
 
-            # Verticals
-            for vertical, score, critical in reg["verticals"]:
-                cursor.execute(
-                    "INSERT OR IGNORE INTO regulation_verticals (regulation_id, vertical, relevance_score, is_critical) VALUES (?,?,?,?)",
-                    (reg_db_id, vertical, score, 1 if critical else 0),
-                )
-
-            # Entities
-            for entity_type, requirements in reg.get("entities", []):
-                cursor.execute(
-                    "INSERT INTO regulation_entities (regulation_id, entity_type, compliance_requirements, deadline_date) VALUES (?,?,?,?)",
-                    (reg_db_id, entity_type, json.dumps(requirements), reg.get("deadline_date")),
-                )
-
-            # Initial update record
-            urgency = "critical" if reg.get("deadline_date") and (
-                date.fromisoformat(reg["deadline_date"]) - today
-            ).days <= 30 else "high" if reg["impact_score"] >= 8 else "medium"
-            cursor.execute(
-                "INSERT INTO regulation_updates (regulation_id, update_type, urgency) VALUES (?,?,?)",
-                (reg_db_id, "new_regulation", urgency),
-            )
+            _insert_verticals(cursor, reg_db_id, reg)
+            _insert_entities(cursor, reg_db_id, reg)
+            _insert_initial_update(cursor, reg_db_id, reg)
 
         except Exception as e:
             print(f"  Warning: {reg['regulation_id']}: {e}")
