@@ -12,6 +12,36 @@ const NEXT_STEPS = [
   { id: 7, label: 'Build compliance tracking (gap analysis per customer)' },
 ]
 
+function RoadmapItem({ step, isChecked, toggleCheck }) {
+  const [isFocused, setIsFocused] = useState(false)
+  return (
+    <button
+      role="checkbox"
+      aria-checked={isChecked ? 'true' : 'false'}
+      onClick={() => toggleCheck(step.id)}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+        background: isChecked ? 'rgba(16,185,129,0.1)' : 'rgba(51,65,85,0.3)',
+        border: `1px solid ${isChecked ? '#065f46' : '#334155'}`,
+        borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s',
+        textAlign: 'left',
+        outline: isFocused ? '2px solid #60a5fa' : 'none',
+        outlineOffset: '2px',
+      }}
+    >
+      {isChecked
+        ? <CheckSquare size={18} color="#10b981" />
+        : <Square size={18} color="#64748b" />
+      }
+      <span style={{ fontSize: 14, color: isChecked ? '#6ee7b7' : '#cbd5e1', textDecoration: isChecked ? 'line-through' : 'none' }}>
+        {step.id}. {step.label}
+      </span>
+    </button>
+  )
+}
+
 const URGENCY_COLORS = { critical: '#ef4444', high: '#f97316', medium: '#f59e0b', low: '#94a3b8' }
 const AGENCY_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899']
 
@@ -119,24 +149,12 @@ export default function Analysis({ apiBase }) {
         <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 600 }}>🚀 Product Roadmap — Next Steps</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {NEXT_STEPS.map(step => (
-            <div
+            <RoadmapItem
               key={step.id}
-              onClick={() => toggleCheck(step.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
-                background: checks[step.id] ? 'rgba(16,185,129,0.1)' : 'rgba(51,65,85,0.3)',
-                border: `1px solid ${checks[step.id] ? '#065f46' : '#334155'}`,
-                borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s',
-              }}
-            >
-              {checks[step.id]
-                ? <CheckSquare size={18} color="#10b981" />
-                : <Square size={18} color="#64748b" />
-              }
-              <span style={{ fontSize: 14, color: checks[step.id] ? '#6ee7b7' : '#cbd5e1', textDecoration: checks[step.id] ? 'line-through' : 'none' }}>
-                {step.id}. {step.label}
-              </span>
-            </div>
+              step={step}
+              isChecked={checks[step.id]}
+              toggleCheck={toggleCheck}
+            />
           ))}
         </div>
         <div style={{ marginTop: 12, fontSize: 12, color: '#475569' }}>
