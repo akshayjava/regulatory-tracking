@@ -37,6 +37,34 @@ def _build_regulation_response(row: dict, conn) -> RegulationResponse:
     row["verticals"] = verticals
     return RegulationResponse(**row)
 
+def _build_regulation_list_responses(rows: list, conn) -> List[RegulationResponse]:
+    """Helper to batch the verticals query for multiple regulations (fixes N+1 problem)."""
+    if not rows:
+        return []
+
+    ids = [r["id"] for r in rows]
+    placeholders = ",".join(["?"] * len(ids))
+
+    # ⚡ Bolt Optimization: Batch vertical query instead of looping (N+1 -> 1)
+    cur = conn.execute(
+        f"SELECT regulation_id, vertical, relevance_score, is_critical FROM regulation_verticals WHERE regulation_id IN ({placeholders})",
+        ids,
+    )
+
+    verticals_map = {}
+    for v_row in cur.fetchall():
+        reg_id = v_row[0]
+        vi = VerticalInfo(vertical=v_row[1], relevance_score=v_row[2], is_critical=bool(v_row[3]))
+        verticals_map.setdefault(reg_id, []).append(vi)
+
+    responses = []
+    for row in rows:
+        row_dict = row_to_dict(row)
+        row_dict["verticals"] = verticals_map.get(row["id"], [])
+        responses.append(RegulationResponse(**row_dict))
+
+    return responses
+
 
 @router.get("/stats/summary", response_model=DashboardStats)
 def get_stats():
@@ -90,10 +118,14 @@ def get_deadline_alerts(days: int = Query(30, ge=1, le=365)):
     today = date.today()
     cutoff = (today + timedelta(days=days)).isoformat()
     with get_db() as conn:
+        # ⚡ Bolt Optimization: Use GROUP_CONCAT to fetch verticals in the same query (N+1 -> 1)
         rows = conn.execute(
-            """SELECT r.regulation_id, r.title, r.deadline_date, r.impact_score
+            """SELECT r.regulation_id, r.title, r.deadline_date, r.impact_score,
+                      GROUP_CONCAT(rv.vertical) as verticals
                FROM regulations r
+               LEFT JOIN regulation_verticals rv ON r.id = rv.regulation_id
                WHERE r.deadline_date BETWEEN ? AND ?
+               GROUP BY r.id
                ORDER BY r.deadline_date ASC""",
             (today.isoformat(), cutoff),
         ).fetchall()
@@ -103,13 +135,11 @@ def get_deadline_alerts(days: int = Query(30, ge=1, le=365)):
             dl = date.fromisoformat(row[2])
             days_until = (dl - today).days
             urgency = "critical" if days_until <= 30 else "high" if days_until <= 60 else "medium"
-            reg_row = conn.execute("SELECT id FROM regulations WHERE regulation_id=?", (row[0],)).fetchone()
+
             verticals = []
-            if reg_row:
-                v_rows = conn.execute(
-                    "SELECT vertical FROM regulation_verticals WHERE regulation_id=?", (reg_row[0],)
-                ).fetchall()
-                verticals = [v[0] for v in v_rows]
+            if row["verticals"]:
+                verticals = row["verticals"].split(",")
+
             alerts.append(DeadlineAlert(
                 regulation_id=row[0], title=row[1], deadline_date=dl,
                 days_until=days_until, urgency=urgency, verticals=verticals,
@@ -131,7 +161,8 @@ def get_by_vertical(vertical_name: str, limit: int = Query(50, le=100)):
                LIMIT ?""",
             (vertical_name, limit),
         ).fetchall()
-        return [_build_regulation_response(row_to_dict(r), conn) for r in rows]
+        # ⚡ Bolt Optimization: Batch vertical query instead of looping (N+1 -> 1)
+        return _build_regulation_list_responses(rows, conn)
 
 
 @router.get("/{regulation_id_slug}", response_model=RegulationResponse)
@@ -190,7 +221,8 @@ def list_regulations(
             f"SELECT r.* FROM regulations r {where_sql} ORDER BY r.impact_score DESC LIMIT ? OFFSET ?",
             params + [page_size, offset],
         ).fetchall()
-        items = [_build_regulation_response(row_to_dict(r), conn) for r in rows]
+        # ⚡ Bolt Optimization: Batch vertical query instead of looping (N+1 -> 1)
+        items = _build_regulation_list_responses(rows, conn)
         return RegulationListResponse(
             items=items, total=total, page=page, page_size=page_size,
             total_pages=(total + page_size - 1) // page_size,

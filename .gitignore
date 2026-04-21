@@ -4,4 +4,5 @@ data/
 frontend/node_modules/
 __pycache__/
 *.pyc
+backend/venv
 venv/
