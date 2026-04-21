@@ -4,10 +4,9 @@ Sources router — regulatory source health, ingestion status, and manual sync.
 from __future__ import annotations
 import sys
 import os
-from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 
-from ..database import get_db, row_to_dict
+from ..database import get_db
 from ..models import SourceStatus
 
 router = APIRouter(prefix="/sources", tags=["sources"])
