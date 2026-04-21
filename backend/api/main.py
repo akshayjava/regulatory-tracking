@@ -1,3 +1,4 @@
+import os
 """
 LATTICE Regulatory API — FastAPI application entrypoint.
 """
