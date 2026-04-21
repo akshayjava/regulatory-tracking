@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 import logging
-from typing import List, Optional
+from typing import Optional
 
 import anthropic
 from fastapi import APIRouter, HTTPException, Query
@@ -169,6 +169,38 @@ My question: {req.question}"""
         return {"answer": text, "model": MODEL}
 
 
+def _generate_annotation(client: anthropic.Anthropic, reg: dict) -> str:
+    reg_text = f"""Regulation ID: {reg['regulation_id']}
+Title: {reg['title']}
+Type: {reg.get('type', 'N/A')}
+Status: {reg.get('status', 'N/A')}
+Source: {reg.get('source', 'N/A')}
+Published: {reg.get('published_date', 'N/A')}
+Effective Date: {reg.get('effective_date', 'N/A')}
+Deadline: {reg.get('deadline_date', 'N/A')}
+Impact Score: {reg.get('impact_score', 'N/A')}/10
+Complexity Score: {reg.get('complexity_score', 'N/A')}/10
+Citation: {reg.get('citation', 'N/A')}
+
+Summary:
+{reg.get('summary') or reg.get('title')}"""
+
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=1500,
+        thinking={"type": "adaptive"},
+        system=ANNOTATION_PROMPT,
+        messages=[
+            {
+                "role": "user",
+                "content": f"Please provide a plain-language annotation for this regulation:\n\n{reg_text}",
+            }
+        ],
+    )
+
+    return next((b.text for b in response.content if b.type == "text"), "")
+
+
 @router.post("/annotate/{regulation_id_slug}", response_model=AnnotationResponse)
 def annotate_regulation(regulation_id_slug: str, force_refresh: bool = Query(False)):
     """
@@ -200,38 +232,7 @@ def annotate_regulation(regulation_id_slug: str, force_refresh: bool = Query(Fal
                 )
 
     client = _get_client()
-
-    reg_text = f"""Regulation ID: {reg['regulation_id']}
-Title: {reg['title']}
-Type: {reg.get('type', 'N/A')}
-Status: {reg.get('status', 'N/A')}
-Source: {reg.get('source', 'N/A')}
-Published: {reg.get('published_date', 'N/A')}
-Effective Date: {reg.get('effective_date', 'N/A')}
-Deadline: {reg.get('deadline_date', 'N/A')}
-Impact Score: {reg.get('impact_score', 'N/A')}/10
-Complexity Score: {reg.get('complexity_score', 'N/A')}/10
-Citation: {reg.get('citation', 'N/A')}
-
-Summary:
-{reg.get('summary') or reg.get('title')}"""
-
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=1500,
-        thinking={"type": "adaptive"},
-        system=ANNOTATION_PROMPT,
-        messages=[
-            {
-                "role": "user",
-                "content": f"Please provide a plain-language annotation for this regulation:\n\n{reg_text}",
-            }
-        ],
-    )
-
-    annotation_text = next(
-        (b.text for b in response.content if b.type == "text"), ""
-    )
+    annotation_text = _generate_annotation(client, reg)
 
     # Cache the result
     with get_db() as conn:

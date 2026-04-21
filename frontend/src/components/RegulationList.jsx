@@ -204,6 +204,7 @@ export default function RegulationList({ apiBase }) {
         <div style={{ flex: 1, position: 'relative' }}>
           <Search size={16} style={{ position: 'absolute', left: 12, top: 10, color: '#64748b' }} />
           <input
+            aria-label="Search regulations"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search regulations by title or keyword..."
@@ -213,13 +214,13 @@ export default function RegulationList({ apiBase }) {
             }}
           />
         </div>
-        <select value={status} onChange={e => setStatus(e.target.value)} style={{
+        <select aria-label="Filter by status" value={status} onChange={e => setStatus(e.target.value)} style={{
           background: '#334155', border: '1px solid #475569', borderRadius: 6,
           padding: '8px 12px', color: 'white', fontSize: 13, cursor: 'pointer',
         }}>
           {STATUSES.map(s => <option key={s} value={s}>{s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
         </select>
-        <button onClick={exportCSV} style={{
+        <button aria-label="Export regulations to CSV" onClick={exportCSV} style={{
           background: '#2563eb', border: 'none', borderRadius: 6, padding: '8px 16px',
           color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600,
         }}>
@@ -239,7 +240,22 @@ export default function RegulationList({ apiBase }) {
         {loading && <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Loading...</div>}
 
         {!loading && data?.items?.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>No regulations found</div>
+          <div style={{ textAlign: 'center', padding: 60, background: 'rgba(51,65,85,0.2)', borderRadius: 8, border: '1px dashed #475569' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
+            <h3 style={{ margin: '0 0 8px', color: '#e2e8f0', fontSize: 18, fontWeight: 600 }}>No regulations found</h3>
+            <p style={{ margin: '0 0 20px', color: '#94a3b8', fontSize: 14 }}>Try adjusting your search or filters to find what you're looking for.</p>
+            {(vertical !== 'all' || status !== 'all' || search !== '') && (
+              <button
+                onClick={() => { setVertical('all'); setStatus('all'); setSearch(''); }}
+                style={{
+                  background: '#2563eb', border: 'none', borderRadius: 6, padding: '8px 16px',
+                  color: 'white', cursor: 'pointer', fontSize: 14, fontWeight: 500,
+                }}
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
