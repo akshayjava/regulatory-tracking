@@ -17,6 +17,8 @@ export default function AIQuery({ apiBase }) {
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [inputFocused, setInputFocused] = useState(false)
+  const [focusedSuggestion, setFocusedSuggestion] = useState(null)
   const answerRef = useRef(null)
 
   async function submit(q) {
@@ -91,11 +93,12 @@ export default function AIQuery({ apiBase }) {
       {/* Input area */}
       <div style={card}>
         {/* Vertical filter */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }} role="group" aria-label="Filter by vertical">
           {VERTICALS.map(v => (
             <button
               key={v}
               onClick={() => setVertical(v)}
+              aria-pressed={vertical === v}
               style={{
                 padding: '4px 12px',
                 borderRadius: 20,
@@ -116,8 +119,11 @@ export default function AIQuery({ apiBase }) {
         {/* Text input */}
         <div style={{ display: 'flex', gap: 10 }}>
           <textarea
+            aria-label="Question for AI"
             value={question}
             onChange={e => setQuestion(e.target.value)}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
             onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
@@ -129,13 +135,16 @@ export default function AIQuery({ apiBase }) {
             style={{
               flex: 1,
               background: '#0f172a',
-              border: '1px solid #334155',
+              border: '1px solid',
+              borderColor: inputFocused ? '#818cf8' : '#334155',
+              boxShadow: inputFocused ? '0 0 0 2px rgba(129, 140, 248, 0.2)' : 'none',
               borderRadius: 8,
               color: 'white',
               padding: '10px 14px',
               fontSize: 14,
               resize: 'none',
               outline: 'none',
+              transition: 'border-color 0.15s, box-shadow 0.15s',
             }}
           />
           <button
@@ -169,27 +178,40 @@ export default function AIQuery({ apiBase }) {
             Suggested questions
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {SUGGESTED.map((s, i) => (
-              <button
-                key={i}
-                onClick={() => { setQuestion(s); submit(s) }}
-                style={{
-                  textAlign: 'left',
-                  background: '#0f172a',
-                  border: '1px solid #334155',
-                  borderRadius: 8,
-                  color: '#94a3b8',
-                  padding: '8px 14px',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                  transition: 'all 0.15s',
-                }}
-                onMouseEnter={e => { e.target.style.borderColor = '#818cf8'; e.target.style.color = '#c7d2fe' }}
-                onMouseLeave={e => { e.target.style.borderColor = '#334155'; e.target.style.color = '#94a3b8' }}
-              >
-                {s}
-              </button>
-            ))}
+            {SUGGESTED.map((s, i) => {
+              const isFocused = focusedSuggestion === i;
+              return (
+                <button
+                  key={i}
+                  onClick={() => { setQuestion(s); submit(s) }}
+                  onFocus={() => setFocusedSuggestion(i)}
+                  onBlur={() => setFocusedSuggestion(null)}
+                  style={{
+                    textAlign: 'left',
+                    background: '#0f172a',
+                    border: '1px solid',
+                    borderColor: isFocused ? '#818cf8' : '#334155',
+                    boxShadow: isFocused ? '0 0 0 2px rgba(129, 140, 248, 0.2)' : 'none',
+                    borderRadius: 8,
+                    color: isFocused ? '#c7d2fe' : '#94a3b8',
+                    padding: '8px 14px',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    transition: 'all 0.15s',
+                    outline: 'none',
+                  }}
+                  onMouseEnter={e => { e.target.style.borderColor = '#818cf8'; e.target.style.color = '#c7d2fe' }}
+                  onMouseLeave={e => {
+                    if (!isFocused) {
+                      e.target.style.borderColor = '#334155';
+                      e.target.style.color = '#94a3b8';
+                    }
+                  }}
+                >
+                  {s}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

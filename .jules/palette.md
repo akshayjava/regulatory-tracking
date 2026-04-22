@@ -1,0 +1,3 @@
+## 2025-04-22 - Handling Focus States with Inline Styles
+**Learning:** When building React components purely with inline styles, CSS pseudo-classes like `:focus-visible` or `:focus` cannot be used directly in the style object. Using `outline: 'none'` to remove default browser rings leaves keyboard users completely blind to where their focus is.
+**Action:** Always implement a dedicated React state (e.g. `isFocused`) managed by `onFocus` and `onBlur` handlers to manually apply custom focus rings (via `boxShadow` or `borderColor`) to interactive elements.
