@@ -1,0 +1,3 @@
+## 2024-04-23 - Accessibility with Inline Styles
+**Learning:** This app heavily relies on inline styles instead of external CSS files or utility classes. This makes applying standard CSS pseudo-classes like `:focus-visible` impossible natively. Interactive elements must be semantic (e.g. `<button>` instead of `<div>`) and focus states must be manually handled via `onFocus` and `onBlur` applying visual indicators like `boxShadow`.
+**Action:** When adding or fixing interactive elements, use semantic tags (like `<button>`), manually attach `onFocus`/`onBlur` state to render custom focus rings via inline styles, and remember to supply proper ARIA attributes (like `role` and `aria-checked`).
