@@ -3,7 +3,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
-import { AlertCircle, CheckCircle, Clock, Database, Zap } from 'lucide-react'
+import { AlertCircle, CheckCircle, Database, Zap } from 'lucide-react'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 const STATUS_COLORS = { proposed: '#f59e0b', final: '#3b82f6', effective: '#10b981' }
