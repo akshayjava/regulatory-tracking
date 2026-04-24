@@ -17,6 +17,7 @@ export default function AIQuery({ apiBase }) {
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [isFocused, setIsFocused] = useState(false)
   const answerRef = useRef(null)
 
   async function submit(q) {
@@ -116,8 +117,11 @@ export default function AIQuery({ apiBase }) {
         {/* Text input */}
         <div style={{ display: 'flex', gap: 10 }}>
           <textarea
+            aria-label="AI Query Input"
             value={question}
             onChange={e => setQuestion(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
@@ -129,13 +133,15 @@ export default function AIQuery({ apiBase }) {
             style={{
               flex: 1,
               background: '#0f172a',
-              border: '1px solid #334155',
+              border: `1px solid ${isFocused ? '#818cf8' : '#334155'}`,
+              boxShadow: isFocused ? '0 0 0 2px rgba(129, 140, 248, 0.2)' : 'none',
               borderRadius: 8,
               color: 'white',
               padding: '10px 14px',
               fontSize: 14,
               resize: 'none',
               outline: 'none',
+              transition: 'border-color 0.15s, box-shadow 0.15s',
             }}
           />
           <button
