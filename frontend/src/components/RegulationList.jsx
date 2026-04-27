@@ -138,6 +138,7 @@ export default function RegulationList({ apiBase }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [expandedAnnotations, setExpandedAnnotations] = useState(new Set())
+  const [focusedElement, setFocusedElement] = useState(null)
   const debouncedSearch = useDebounce(search, 300)
 
   function toggleAnnotation(id) {
@@ -187,13 +188,15 @@ export default function RegulationList({ apiBase }) {
       {/* Vertical Tabs */}
       <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 10, padding: 20 }}>
         <div style={{ fontSize: 14, color: '#94a3b8', marginBottom: 12 }}>Filter by Vertical</div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div role="group" aria-label="Filter by vertical" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {VERTICALS.map(v => (
-            <button key={v} onClick={() => setVertical(v)} style={{
+            <button key={v} onClick={() => setVertical(v)} aria-pressed={vertical === v} onFocus={() => setFocusedElement(`vertical-${v}`)} onBlur={() => setFocusedElement(null)} style={{
               padding: '6px 16px', borderRadius: 6, border: 'none', cursor: 'pointer',
               background: vertical === v ? '#2563eb' : '#334155',
               color: vertical === v ? 'white' : '#94a3b8',
               fontWeight: 600, textTransform: 'capitalize', fontSize: 13,
+              boxShadow: focusedElement === `vertical-${v}` ? '0 0 0 2px #60a5fa' : 'none',
+              transition: 'box-shadow 0.2s ease',
             }}>{v}</button>
           ))}
         </div>
@@ -205,24 +208,34 @@ export default function RegulationList({ apiBase }) {
           <Search size={16} style={{ position: 'absolute', left: 12, top: 10, color: '#64748b' }} />
           <input
             aria-label="Search regulations"
+            onFocus={() => setFocusedElement('search')}
+            onBlur={() => setFocusedElement(null)}
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search regulations by title or keyword..."
             style={{
               width: '100%', background: '#334155', border: '1px solid #475569', borderRadius: 6,
               padding: '8px 12px 8px 36px', color: 'white', fontSize: 14, outline: 'none',
+              boxShadow: focusedElement === 'search' ? '0 0 0 2px #60a5fa' : 'none',
+              transition: 'box-shadow 0.2s ease',
             }}
           />
         </div>
-        <select aria-label="Filter by status" value={status} onChange={e => setStatus(e.target.value)} style={{
+        <select aria-label="Filter by status" value={status} onChange={e => setStatus(e.target.value)} onFocus={() => setFocusedElement('status')} onBlur={() => setFocusedElement(null)} style={{
           background: '#334155', border: '1px solid #475569', borderRadius: 6,
           padding: '8px 12px', color: 'white', fontSize: 13, cursor: 'pointer',
+          outline: 'none',
+          boxShadow: focusedElement === 'status' ? '0 0 0 2px #60a5fa' : 'none',
+          transition: 'box-shadow 0.2s ease',
         }}>
           {STATUSES.map(s => <option key={s} value={s}>{s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
         </select>
-        <button aria-label="Export regulations to CSV" onClick={exportCSV} style={{
+        <button aria-label="Export regulations to CSV" onClick={exportCSV} onFocus={() => setFocusedElement('export')} onBlur={() => setFocusedElement(null)} style={{
           background: '#2563eb', border: 'none', borderRadius: 6, padding: '8px 16px',
           color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600,
+          outline: 'none',
+          boxShadow: focusedElement === 'export' ? '0 0 0 2px #60a5fa' : 'none',
+          transition: 'box-shadow 0.2s ease',
         }}>
           <Download size={15} /> Export
         </button>
