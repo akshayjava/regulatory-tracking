@@ -1,0 +1,3 @@
+## 2024-03-21 - Manual Focus States for Inline Styles in React
+**Learning:** Because CSS pseudo-classes like `:focus-visible` cannot be natively applied via inline styles (`style={{...}}`), accessibility focus states must be manually handled by attaching `onFocus` and `onBlur` handlers to semantic elements (like `<textarea>` and `<button>`) to render custom focus rings (e.g., via `boxShadow` or `borderColor` updates).
+**Action:** When working in React codebases that rely heavily on inline styles instead of external CSS files or utility classes, implement state-driven focus indicators to ensure keyboard accessibility.
