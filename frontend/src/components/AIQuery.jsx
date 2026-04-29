@@ -96,6 +96,8 @@ export default function AIQuery({ apiBase }) {
             <button
               key={v}
               onClick={() => setVertical(v)}
+              onFocus={e => e.target.style.boxShadow = '0 0 0 2px #818cf8'}
+              onBlur={e => e.target.style.boxShadow = 'none'}
               style={{
                 padding: '4px 12px',
                 borderRadius: 20,
@@ -118,6 +120,8 @@ export default function AIQuery({ apiBase }) {
           <textarea
             value={question}
             onChange={e => setQuestion(e.target.value)}
+            onFocus={e => { e.target.style.boxShadow = '0 0 0 2px #818cf8'; e.target.style.borderColor = '#818cf8' }}
+            onBlur={e => { e.target.style.boxShadow = 'none'; e.target.style.borderColor = '#334155' }}
             onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
@@ -141,6 +145,8 @@ export default function AIQuery({ apiBase }) {
           <button
             onClick={() => submit()}
             disabled={loading || !question.trim()}
+            onFocus={e => e.target.style.boxShadow = '0 0 0 2px #818cf8'}
+            onBlur={e => e.target.style.boxShadow = 'none'}
             style={{
               padding: '0 20px',
               background: loading || !question.trim() ? '#1e3a5f' : '#1d4ed8',
@@ -186,6 +192,8 @@ export default function AIQuery({ apiBase }) {
                 }}
                 onMouseEnter={e => { e.target.style.borderColor = '#818cf8'; e.target.style.color = '#c7d2fe' }}
                 onMouseLeave={e => { e.target.style.borderColor = '#334155'; e.target.style.color = '#94a3b8' }}
+                onFocus={e => { e.target.style.borderColor = '#818cf8'; e.target.style.color = '#c7d2fe'; e.target.style.boxShadow = '0 0 0 2px #818cf8' }}
+                onBlur={e => { e.target.style.borderColor = '#334155'; e.target.style.color = '#94a3b8'; e.target.style.boxShadow = 'none' }}
               >
                 {s}
               </button>

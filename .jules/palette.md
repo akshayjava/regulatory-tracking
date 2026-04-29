@@ -1,0 +1,3 @@
+## 2024-04-29 - Inline Styling and Keyboard Focus
+**Learning:** Because CSS pseudo-classes like `:focus-visible` cannot be natively applied via React inline styles (`style={{...}}`), adding `outline: 'none'` to interactive elements like `<textarea>` or `<button>` breaks keyboard accessibility unless explicitly handled.
+**Action:** When working with inline styles, manually implement focus rings by attaching `onFocus` and `onBlur` handlers to semantic elements to render custom focus indicators (e.g., modifying `boxShadow` or `borderColor` statefully or directly on `e.target.style`).
