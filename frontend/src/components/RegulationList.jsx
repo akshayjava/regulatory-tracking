@@ -207,6 +207,8 @@ export default function RegulationList({ apiBase }) {
             aria-label="Search regulations"
             value={search}
             onChange={e => setSearch(e.target.value)}
+            onFocus={e => { e.currentTarget.style.outline = '2px solid #3b82f6'; e.currentTarget.style.outlineOffset = '2px' }}
+            onBlur={e => { e.currentTarget.style.outline = 'none' }}
             placeholder="Search regulations by title or keyword..."
             style={{
               width: '100%', background: '#334155', border: '1px solid #475569', borderRadius: 6,
@@ -214,15 +216,21 @@ export default function RegulationList({ apiBase }) {
             }}
           />
         </div>
-        <select aria-label="Filter by status" value={status} onChange={e => setStatus(e.target.value)} style={{
+        <select aria-label="Filter by status" value={status} onChange={e => setStatus(e.target.value)}
+          onFocus={e => { e.currentTarget.style.outline = '2px solid #3b82f6'; e.currentTarget.style.outlineOffset = '2px' }}
+          onBlur={e => { e.currentTarget.style.outline = 'none' }}
+          style={{
           background: '#334155', border: '1px solid #475569', borderRadius: 6,
-          padding: '8px 12px', color: 'white', fontSize: 13, cursor: 'pointer',
+          padding: '8px 12px', color: 'white', fontSize: 13, cursor: 'pointer', outline: 'none'
         }}>
           {STATUSES.map(s => <option key={s} value={s}>{s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
         </select>
-        <button aria-label="Export regulations to CSV" onClick={exportCSV} style={{
+        <button aria-label="Export regulations to CSV" onClick={exportCSV}
+          onFocus={e => { e.currentTarget.style.outline = '2px solid #60a5fa'; e.currentTarget.style.outlineOffset = '2px' }}
+          onBlur={e => { e.currentTarget.style.outline = 'none' }}
+          style={{
           background: '#2563eb', border: 'none', borderRadius: 6, padding: '8px 16px',
-          color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600,
+          color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, outline: 'none'
         }}>
           <Download size={15} /> Export
         </button>
@@ -335,13 +343,17 @@ export default function RegulationList({ apiBase }) {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              style={{ padding: '6px 16px', borderRadius: 6, border: '1px solid #334155', background: '#334155', color: page === 1 ? '#475569' : 'white', cursor: page === 1 ? 'default' : 'pointer' }}
+              onFocus={e => { e.currentTarget.style.outline = '2px solid #3b82f6'; e.currentTarget.style.outlineOffset = '2px' }}
+              onBlur={e => { e.currentTarget.style.outline = 'none' }}
+              style={{ padding: '6px 16px', borderRadius: 6, border: '1px solid #334155', background: '#334155', color: page === 1 ? '#475569' : 'white', cursor: page === 1 ? 'default' : 'pointer', outline: 'none' }}
             >← Prev</button>
             <span style={{ padding: '6px 0', color: '#94a3b8', fontSize: 13 }}>{page} / {data.total_pages}</span>
             <button
               onClick={() => setPage(p => Math.min(data.total_pages, p + 1))}
               disabled={page === data.total_pages}
-              style={{ padding: '6px 16px', borderRadius: 6, border: '1px solid #334155', background: '#334155', color: page === data.total_pages ? '#475569' : 'white', cursor: page === data.total_pages ? 'default' : 'pointer' }}
+              onFocus={e => { e.currentTarget.style.outline = '2px solid #3b82f6'; e.currentTarget.style.outlineOffset = '2px' }}
+              onBlur={e => { e.currentTarget.style.outline = 'none' }}
+              style={{ padding: '6px 16px', borderRadius: 6, border: '1px solid #334155', background: '#334155', color: page === data.total_pages ? '#475569' : 'white', cursor: page === data.total_pages ? 'default' : 'pointer', outline: 'none' }}
             >Next →</button>
           </div>
         )}
