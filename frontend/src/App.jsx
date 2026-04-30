@@ -46,11 +46,16 @@ export default function App() {
         </div>
 
         {/* Tab nav */}
-        <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #334155', marginBottom: 0 }}>
+        <div role="tablist" style={{ display: 'flex', gap: 4, borderBottom: '1px solid #334155', marginBottom: 0 }}>
           {TABS.map((tab) => (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`panel-${tab.id}`}
               onClick={() => setActiveTab(tab.id)}
+              onFocus={e => { e.currentTarget.style.outline = '2px solid #3b82f6'; e.currentTarget.style.outlineOffset = '-2px' }}
+              onBlur={e => { e.currentTarget.style.outline = 'none' }}
               style={{
                 padding: '10px 20px',
                 background: 'none',
@@ -61,6 +66,7 @@ export default function App() {
                 fontWeight: 500,
                 fontSize: 14,
                 transition: 'all 0.15s',
+                outline: 'none'
               }}
             >
               {tab.label}
@@ -70,7 +76,7 @@ export default function App() {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: 24 }}>
+      <div role="tabpanel" id={`panel-${activeTab}`} style={{ maxWidth: 1280, margin: '0 auto', padding: 24 }}>
         {activeTab === 'dashboard' && <Dashboard apiBase={API_BASE} />}
         {activeTab === 'regulations' && <RegulationList apiBase={API_BASE} />}
         {activeTab === 'analysis' && <Analysis apiBase={API_BASE} />}
