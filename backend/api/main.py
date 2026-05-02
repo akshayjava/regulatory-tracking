@@ -1,8 +1,8 @@
-import os
 """
 LATTICE Regulatory API — FastAPI application entrypoint.
 """
 import logging
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
