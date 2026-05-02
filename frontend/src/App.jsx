@@ -18,6 +18,36 @@ const TABS = [
   { id: 'monitor', label: '⚙️ Monitor' },
 ]
 
+function TabButton({ tab, isActive, onClick }) {
+  const [isFocused, setIsFocused] = useState(false);
+
+  return (
+    <button
+      role="tab"
+      aria-selected={isActive}
+      onClick={onClick}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+      style={{
+        padding: '10px 20px',
+        background: 'none',
+        border: 'none',
+        borderBottom: isActive ? '2px solid #3b82f6' : '2px solid transparent',
+        color: isActive ? '#60a5fa' : '#94a3b8',
+        cursor: 'pointer',
+        fontWeight: 500,
+        fontSize: 14,
+        transition: 'all 0.15s',
+        outline: 'none',
+        boxShadow: isFocused ? '0 0 0 2px #3b82f6' : 'none',
+        borderRadius: isFocused ? '4px' : '0',
+      }}
+    >
+      {tab.label}
+    </button>
+  );
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [apiOnline, setApiOnline] = useState(true)
@@ -46,25 +76,14 @@ export default function App() {
         </div>
 
         {/* Tab nav */}
-        <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #334155', marginBottom: 0 }}>
+        <div role="tablist" aria-label="Main Navigation" style={{ display: 'flex', gap: 4, borderBottom: '1px solid #334155', marginBottom: 0 }}>
           {TABS.map((tab) => (
-            <button
+            <TabButton
               key={tab.id}
+              tab={tab}
+              isActive={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                padding: '10px 20px',
-                background: 'none',
-                border: 'none',
-                borderBottom: activeTab === tab.id ? '2px solid #3b82f6' : '2px solid transparent',
-                color: activeTab === tab.id ? '#60a5fa' : '#94a3b8',
-                cursor: 'pointer',
-                fontWeight: 500,
-                fontSize: 14,
-                transition: 'all 0.15s',
-              }}
-            >
-              {tab.label}
-            </button>
+            />
           ))}
         </div>
       </div>
