@@ -84,7 +84,6 @@ def test_save_regulation_update(pipeline):
 
     # Mock is_duplicate to return False so it updates
     import backend.ingestion.pipeline as pipeline_mod
-    import types
     original_is_duplicate = pipeline_mod.is_duplicate
     try:
         pipeline_mod.is_duplicate = lambda r, c: False

@@ -1,6 +1,3 @@
-import pytest
-import os
-from unittest.mock import patch
 
 def test_ai_query_stream(client, mocker):
     mock_client = mocker.MagicMock()
