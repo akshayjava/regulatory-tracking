@@ -5,7 +5,7 @@ import tempfile
 import pytest
 from click.testing import CliRunner
 
-from query.cli import cli, export
+from query.cli import cli
 
 @pytest.fixture
 def temp_db():
