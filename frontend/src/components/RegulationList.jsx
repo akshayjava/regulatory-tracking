@@ -138,6 +138,7 @@ export default function RegulationList({ apiBase }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [expandedAnnotations, setExpandedAnnotations] = useState(new Set())
+  const [searchFocused, setSearchFocused] = useState(false)
   const debouncedSearch = useDebounce(search, 300)
 
   function toggleAnnotation(id) {
@@ -202,15 +203,21 @@ export default function RegulationList({ apiBase }) {
       {/* Search + Status Filter */}
       <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 10, padding: 16, display: 'flex', gap: 12 }}>
         <div style={{ flex: 1, position: 'relative' }}>
-          <Search size={16} style={{ position: 'absolute', left: 12, top: 10, color: '#64748b' }} />
+          <Search size={16} style={{ position: 'absolute', left: 12, top: 10, color: searchFocused ? '#818cf8' : '#64748b' }} />
           <input
             aria-label="Search regulations"
             value={search}
             onChange={e => setSearch(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
             placeholder="Search regulations by title or keyword..."
             style={{
-              width: '100%', background: '#334155', border: '1px solid #475569', borderRadius: 6,
+              width: '100%', background: '#334155',
+              border: `1px solid ${searchFocused ? '#818cf8' : '#475569'}`,
+              boxShadow: searchFocused ? '0 0 0 2px rgba(129, 140, 248, 0.2)' : 'none',
+              borderRadius: 6,
               padding: '8px 12px 8px 36px', color: 'white', fontSize: 14, outline: 'none',
+              transition: 'border-color 0.15s, box-shadow 0.15s'
             }}
           />
         </div>
