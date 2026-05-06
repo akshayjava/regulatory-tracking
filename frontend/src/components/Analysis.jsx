@@ -118,26 +118,34 @@ export default function Analysis({ apiBase }) {
       <div style={{ background: '#1e293b', border: '1px solid #3b82f6', borderRadius: 10, padding: 24 }}>
         <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 600 }}>🚀 Product Roadmap — Next Steps</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {NEXT_STEPS.map(step => (
-            <div
+          {NEXT_STEPS.map(step => {
+            const isChecked = !!checks[step.id];
+            return (
+            <button
               key={step.id}
               onClick={() => toggleCheck(step.id)}
+              role="checkbox"
+              aria-checked={isChecked}
+              onFocus={(e) => { e.currentTarget.style.boxShadow = '0 0 0 2px #3b82f6'; }}
+              onBlur={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
-                background: checks[step.id] ? 'rgba(16,185,129,0.1)' : 'rgba(51,65,85,0.3)',
-                border: `1px solid ${checks[step.id] ? '#065f46' : '#334155'}`,
+                background: isChecked ? 'rgba(16,185,129,0.1)' : 'rgba(51,65,85,0.3)',
+                border: `1px solid ${isChecked ? '#065f46' : '#334155'}`,
                 borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s',
+                width: '100%', textAlign: 'left', outline: 'none'
               }}
             >
-              {checks[step.id]
+              {isChecked
                 ? <CheckSquare size={18} color="#10b981" />
                 : <Square size={18} color="#64748b" />
               }
-              <span style={{ fontSize: 14, color: checks[step.id] ? '#6ee7b7' : '#cbd5e1', textDecoration: checks[step.id] ? 'line-through' : 'none' }}>
+              <span style={{ fontSize: 14, color: isChecked ? '#6ee7b7' : '#cbd5e1', textDecoration: isChecked ? 'line-through' : 'none' }}>
                 {step.id}. {step.label}
               </span>
-            </div>
-          ))}
+            </button>
+            );
+          })}
         </div>
         <div style={{ marginTop: 12, fontSize: 12, color: '#475569' }}>
           {Object.values(checks).filter(Boolean).length} / {NEXT_STEPS.length} completed
