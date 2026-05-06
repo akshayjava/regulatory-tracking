@@ -1,6 +1,5 @@
 import sqlite3
 from datetime import date
-import json
 
 def seed():
     conn = sqlite3.connect("backend/lattice.db")

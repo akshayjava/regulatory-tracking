@@ -1,5 +1,4 @@
 import time
-import requests
 import sqlite3
 
 base_url = "http://localhost:8000"

@@ -15,10 +15,14 @@ def get_deadlines(days: int = Query(30, ge=1, le=365)):
     today = date.today()
     cutoff = (today + timedelta(days=days)).isoformat()
     with get_db() as conn:
+        # ⚡ Bolt Optimization: Use GROUP_CONCAT to fetch verticals in the same query (N+1 -> 1)
         rows = conn.execute(
-            """SELECT r.regulation_id, r.title, r.deadline_date, r.impact_score, r.status
+            """SELECT r.regulation_id, r.title, r.deadline_date, r.impact_score, r.status,
+                      GROUP_CONCAT(rv.vertical) as verticals
                FROM regulations r
+               LEFT JOIN regulation_verticals rv ON r.id = rv.regulation_id
                WHERE r.deadline_date BETWEEN ? AND ?
+               GROUP BY r.id
                ORDER BY r.deadline_date ASC""",
             (today.isoformat(), cutoff),
         ).fetchall()
@@ -29,15 +33,9 @@ def get_deadlines(days: int = Query(30, ge=1, le=365)):
             days_until = (dl - today).days
             urgency = "critical" if days_until <= 14 else "high" if days_until <= 30 else "medium"
 
-            reg_id_row = conn.execute(
-                "SELECT id FROM regulations WHERE regulation_id=?", (row["regulation_id"],)
-            ).fetchone()
             verticals = []
-            if reg_id_row:
-                v_rows = conn.execute(
-                    "SELECT vertical FROM regulation_verticals WHERE regulation_id=?", (reg_id_row[0],)
-                ).fetchall()
-                verticals = [v[0] for v in v_rows]
+            if row["verticals"]:
+                verticals = row["verticals"].split(",")
 
             results.append({
                 "regulation_id": row["regulation_id"],
