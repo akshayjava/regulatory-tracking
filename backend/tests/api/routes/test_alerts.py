@@ -1,4 +1,3 @@
-import pytest
 from datetime import date, timedelta
 from fastapi.testclient import TestClient
 
