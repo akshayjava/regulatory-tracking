@@ -74,7 +74,10 @@ function AIAnnotation({ apiBase, regulationId }) {
           display: 'flex',
           alignItems: 'center',
           gap: 4,
+          outline: 'none',
         }}
+        onFocus={e => e.currentTarget.style.boxShadow = '0 0 0 2px #60a5fa'}
+        onBlur={e => e.currentTarget.style.boxShadow = 'none'}
       >
         <Bot size={12} /> AI Explain
       </button>
@@ -194,7 +197,11 @@ export default function RegulationList({ apiBase }) {
               background: vertical === v ? '#2563eb' : '#334155',
               color: vertical === v ? 'white' : '#94a3b8',
               fontWeight: 600, textTransform: 'capitalize', fontSize: 13,
-            }}>{v}</button>
+              outline: 'none',
+            }}
+            onFocus={e => e.currentTarget.style.boxShadow = '0 0 0 2px #60a5fa'}
+            onBlur={e => e.currentTarget.style.boxShadow = 'none'}
+            >{v}</button>
           ))}
         </div>
       </div>
@@ -212,18 +219,26 @@ export default function RegulationList({ apiBase }) {
               width: '100%', background: '#334155', border: '1px solid #475569', borderRadius: 6,
               padding: '8px 12px 8px 36px', color: 'white', fontSize: 14, outline: 'none',
             }}
+            onFocus={e => e.currentTarget.style.boxShadow = '0 0 0 2px #60a5fa'}
+            onBlur={e => e.currentTarget.style.boxShadow = 'none'}
           />
         </div>
         <select aria-label="Filter by status" value={status} onChange={e => setStatus(e.target.value)} style={{
           background: '#334155', border: '1px solid #475569', borderRadius: 6,
-          padding: '8px 12px', color: 'white', fontSize: 13, cursor: 'pointer',
-        }}>
+          padding: '8px 12px', color: 'white', fontSize: 13, cursor: 'pointer', outline: 'none',
+        }}
+        onFocus={e => e.currentTarget.style.boxShadow = '0 0 0 2px #60a5fa'}
+        onBlur={e => e.currentTarget.style.boxShadow = 'none'}
+        >
           {STATUSES.map(s => <option key={s} value={s}>{s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
         </select>
         <button aria-label="Export regulations to CSV" onClick={exportCSV} style={{
           background: '#2563eb', border: 'none', borderRadius: 6, padding: '8px 16px',
-          color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600,
-        }}>
+          color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, outline: 'none',
+        }}
+        onFocus={e => e.currentTarget.style.boxShadow = '0 0 0 2px #60a5fa'}
+        onBlur={e => e.currentTarget.style.boxShadow = 'none'}
+        >
           <Download size={15} /> Export
         </button>
       </div>
@@ -249,8 +264,10 @@ export default function RegulationList({ apiBase }) {
                 onClick={() => { setVertical('all'); setStatus('all'); setSearch(''); }}
                 style={{
                   background: '#2563eb', border: 'none', borderRadius: 6, padding: '8px 16px',
-                  color: 'white', cursor: 'pointer', fontSize: 14, fontWeight: 500,
+                  color: 'white', cursor: 'pointer', fontSize: 14, fontWeight: 500, outline: 'none',
                 }}
+                onFocus={e => e.currentTarget.style.boxShadow = '0 0 0 2px #60a5fa'}
+                onBlur={e => e.currentTarget.style.boxShadow = 'none'}
               >
                 Clear all filters
               </button>
@@ -315,7 +332,10 @@ export default function RegulationList({ apiBase }) {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 4,
+                    outline: 'none',
                   }}
+                  onFocus={e => e.currentTarget.style.boxShadow = '0 0 0 2px #60a5fa'}
+                  onBlur={e => e.currentTarget.style.boxShadow = 'none'}
                 >
                   <Bot size={12} />
                   {expandedAnnotations.has(reg.regulation_id) ? 'Hide AI Explanation' : 'AI Explain'}
@@ -335,13 +355,17 @@ export default function RegulationList({ apiBase }) {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              style={{ padding: '6px 16px', borderRadius: 6, border: '1px solid #334155', background: '#334155', color: page === 1 ? '#475569' : 'white', cursor: page === 1 ? 'default' : 'pointer' }}
+              style={{ padding: '6px 16px', borderRadius: 6, border: '1px solid #334155', background: '#334155', color: page === 1 ? '#475569' : 'white', cursor: page === 1 ? 'default' : 'pointer', outline: 'none' }}
+              onFocus={e => e.currentTarget.style.boxShadow = '0 0 0 2px #60a5fa'}
+              onBlur={e => e.currentTarget.style.boxShadow = 'none'}
             >← Prev</button>
             <span style={{ padding: '6px 0', color: '#94a3b8', fontSize: 13 }}>{page} / {data.total_pages}</span>
             <button
               onClick={() => setPage(p => Math.min(data.total_pages, p + 1))}
               disabled={page === data.total_pages}
-              style={{ padding: '6px 16px', borderRadius: 6, border: '1px solid #334155', background: '#334155', color: page === data.total_pages ? '#475569' : 'white', cursor: page === data.total_pages ? 'default' : 'pointer' }}
+              style={{ padding: '6px 16px', borderRadius: 6, border: '1px solid #334155', background: '#334155', color: page === data.total_pages ? '#475569' : 'white', cursor: page === data.total_pages ? 'default' : 'pointer', outline: 'none' }}
+              onFocus={e => e.currentTarget.style.boxShadow = '0 0 0 2px #60a5fa'}
+              onBlur={e => e.currentTarget.style.boxShadow = 'none'}
             >Next →</button>
           </div>
         )}
