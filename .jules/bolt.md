@@ -1,3 +1,3 @@
-## 2024-04-20 - [Optimize N+1 queries in SQLite fastAPI backend]
-**Learning:** SQLite query loops in Python (N+1 queries) via DB fetchalls mapping models over REST endpoints can create significant bottlenecks even with an in-memory or highly optimized local file database. Using IN clauses for batch processing or `GROUP_CONCAT` in JOINs effectively solves this, turning O(N) operations into O(1) batched operations.
-**Action:** Always batch related SQLite lookups using IN clauses or use JOINs rather than iterating and running separate subqueries per row.
+## 2024-05-18 - Avoid committing local db and perf scripts
+**Learning:** During testing of performance issues involving databases, one might create local test scripts and generate `.db` files (e.g. `lattice.db`). When testing SQLite performance using real file-based databases, a large binary DB artifact is produced and tracked by Git if not configured strictly in `.gitignore`.
+**Action:** Always run `git status` after verifying and ensure build artifacts, generated local databases (like `lattice.db`), and throw-away perf scripts are either explicitly ignored or removed before committing to avoid polluting source control.
