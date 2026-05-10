@@ -22,6 +22,7 @@ export default function Analysis({ apiBase }) {
   const [checks, setChecks] = useState(() => {
     try { return JSON.parse(localStorage.getItem('lattice_nextsteps') || '{}') } catch { return {} }
   })
+  const [focusedId, setFocusedId] = useState(null)
 
   useEffect(() => {
     fetch(`${apiBase}/regulations/stats/summary`).then(r => r.json()).then(setStats).catch(() => {})
@@ -119,14 +120,21 @@ export default function Analysis({ apiBase }) {
         <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 600 }}>🚀 Product Roadmap — Next Steps</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {NEXT_STEPS.map(step => (
-            <div
+            <button
               key={step.id}
+              role="checkbox"
+              aria-checked={!!checks[step.id]}
               onClick={() => toggleCheck(step.id)}
+              onFocus={() => setFocusedId(step.id)}
+              onBlur={() => setFocusedId(null)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
                 background: checks[step.id] ? 'rgba(16,185,129,0.1)' : 'rgba(51,65,85,0.3)',
                 border: `1px solid ${checks[step.id] ? '#065f46' : '#334155'}`,
                 borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s',
+                width: '100%', textAlign: 'left',
+                outline: 'none',
+                boxShadow: focusedId === step.id ? '0 0 0 2px #3b82f6' : 'none',
               }}
             >
               {checks[step.id]
@@ -136,7 +144,7 @@ export default function Analysis({ apiBase }) {
               <span style={{ fontSize: 14, color: checks[step.id] ? '#6ee7b7' : '#cbd5e1', textDecoration: checks[step.id] ? 'line-through' : 'none' }}>
                 {step.id}. {step.label}
               </span>
-            </div>
+            </button>
           ))}
         </div>
         <div style={{ marginTop: 12, fontSize: 12, color: '#475569' }}>
