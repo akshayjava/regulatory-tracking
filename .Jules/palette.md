@@ -1,3 +1,6 @@
 ## 2024-05-18 - Missing ARIA Labels in Unlabeled Form Inputs and Improved Empty States
 **Learning:** This app uses inline styles heavily and inputs like Search and Status filters did not have associated `<label>` tags. This caused accessibility issues for screen readers. Additionally, replacing generic "No results found" messages with a clear recovery path (e.g., a CTA to clear filters) significantly improves the user experience.
 **Action:** Next time working on custom styled inputs, ensure ARIA attributes are added if standard label tags aren't present. Also, look out for empty states that leave the user stranded, and try to add actionable buttons to help them recover.
+## 2024-05-19 - Custom Focus Rings with Inline Styles
+**Learning:** Because this app primarily uses inline `style={{...}}` instead of external CSS or utility classes, standard pseudo-classes like `:focus-visible` are unavailable. This can lead to missing keyboard accessibility states on interactive elements.
+**Action:** When implementing interactive elements like buttons using inline styles, attach `onFocus` and `onBlur` handlers to manage focus state in component state, and apply a custom focus ring (e.g., using `boxShadow`) dynamically.
