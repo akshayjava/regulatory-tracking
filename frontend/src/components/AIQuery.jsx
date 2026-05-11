@@ -116,6 +116,7 @@ export default function AIQuery({ apiBase }) {
         {/* Text input */}
         <div style={{ display: 'flex', gap: 10 }}>
           <textarea
+            aria-label="Ask a question about regulations"
             value={question}
             onChange={e => setQuestion(e.target.value)}
             onKeyDown={e => {
