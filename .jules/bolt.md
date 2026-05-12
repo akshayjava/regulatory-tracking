@@ -1,3 +1,6 @@
 ## 2024-04-20 - [Optimize N+1 queries in SQLite fastAPI backend]
 **Learning:** SQLite query loops in Python (N+1 queries) via DB fetchalls mapping models over REST endpoints can create significant bottlenecks even with an in-memory or highly optimized local file database. Using IN clauses for batch processing or `GROUP_CONCAT` in JOINs effectively solves this, turning O(N) operations into O(1) batched operations.
 **Action:** Always batch related SQLite lookups using IN clauses or use JOINs rather than iterating and running separate subqueries per row.
+## 2025-05-12 - SQLite N+1 Optimizations with GROUP_CONCAT
+**Learning:** In the SQLite backend, iterating over database results to execute N+1 related queries (such as fetching verticals for regulations) creates significant performance bottlenecks due to per-query roundtrip overheads, even with an embedded database.
+**Action:** Always batch related lookups when returning lists. Instead of looping `fetchone()`/`fetchall()` operations, optimize the main query by using `LEFT JOIN` combined with `GROUP_CONCAT` to aggregate 1-to-many relationships directly into a single string column (e.g., `GROUP_CONCAT(rv.vertical)`), which can then be easily parsed in Python via `.split(",")`. This guarantees single-query execution and drastically reduces execution time.
