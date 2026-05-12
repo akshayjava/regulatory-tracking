@@ -17,6 +17,7 @@ export default function AIQuery({ apiBase }) {
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [isFocused, setIsFocused] = useState(false)
   const answerRef = useRef(null)
 
   async function submit(q) {
@@ -114,51 +115,61 @@ export default function AIQuery({ apiBase }) {
         </div>
 
         {/* Text input */}
-        <div style={{ display: 'flex', gap: 10 }}>
-          <textarea
-            value={question}
-            onChange={e => setQuestion(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                submit()
-              }
-            }}
-            placeholder="Ask about regulations, compliance requirements, deadlines..."
-            rows={3}
-            style={{
-              flex: 1,
-              background: '#0f172a',
-              border: '1px solid #334155',
-              borderRadius: 8,
-              color: 'white',
-              padding: '10px 14px',
-              fontSize: 14,
-              resize: 'none',
-              outline: 'none',
-            }}
-          />
-          <button
-            onClick={() => submit()}
-            disabled={loading || !question.trim()}
-            style={{
-              padding: '0 20px',
-              background: loading || !question.trim() ? '#1e3a5f' : '#1d4ed8',
-              border: 'none',
-              borderRadius: 8,
-              color: 'white',
-              cursor: loading || !question.trim() ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: 14,
-              fontWeight: 600,
-              opacity: loading || !question.trim() ? 0.6 : 1,
-            }}
-          >
-            {loading ? <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Send size={16} />}
-            {loading ? 'Thinking...' : 'Ask'}
-          </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <textarea
+              aria-label="Ask a question about regulations"
+              value={question}
+              onChange={e => setQuestion(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  submit()
+                }
+              }}
+              placeholder="Ask about regulations, compliance requirements, deadlines..."
+              rows={3}
+              style={{
+                flex: 1,
+                background: '#0f172a',
+                border: `1px solid ${isFocused ? '#818cf8' : '#334155'}`,
+                boxShadow: isFocused ? '0 0 0 2px rgba(129, 140, 248, 0.2)' : 'none',
+                borderRadius: 8,
+                color: 'white',
+                padding: '10px 14px',
+                fontSize: 14,
+                resize: 'none',
+                outline: 'none',
+                transition: 'all 0.15s ease',
+              }}
+            />
+            <button
+              onClick={() => submit()}
+              disabled={loading || !question.trim()}
+              style={{
+                padding: '0 20px',
+                background: loading || !question.trim() ? '#1e3a5f' : '#1d4ed8',
+                border: 'none',
+                borderRadius: 8,
+                color: 'white',
+                cursor: loading || !question.trim() ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 14,
+                fontWeight: 600,
+                opacity: loading || !question.trim() ? 0.6 : 1,
+              }}
+            >
+              {loading ? <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Send size={16} />}
+              {loading ? 'Thinking...' : 'Ask'}
+            </button>
+          </div>
+          <div style={{ fontSize: 12, color: '#64748b', paddingLeft: 4 }}>
+            Press <strong>Enter</strong> to ask, <strong>Shift + Enter</strong> for new line
+          </div>
         </div>
       </div>
 
