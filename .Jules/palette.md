@@ -1,3 +1,6 @@
 ## 2024-05-18 - Missing ARIA Labels in Unlabeled Form Inputs and Improved Empty States
 **Learning:** This app uses inline styles heavily and inputs like Search and Status filters did not have associated `<label>` tags. This caused accessibility issues for screen readers. Additionally, replacing generic "No results found" messages with a clear recovery path (e.g., a CTA to clear filters) significantly improves the user experience.
 **Action:** Next time working on custom styled inputs, ensure ARIA attributes are added if standard label tags aren't present. Also, look out for empty states that leave the user stranded, and try to add actionable buttons to help them recover.
+## 2026-05-13 - Accessible Checklists and Custom Focus Rings
+**Learning:** Interactive list items that behave like checkboxes were implemented as clickable `<div>`s without keyboard accessibility or screen reader attributes. Because inline styles are used extensively, standard pseudo-classes like `:focus-visible` cannot be applied directly via `style={{...}}`.
+**Action:** Always replace clickable `<div>`s with semantic `<button>` elements, add `role="checkbox"` and `aria-checked`, and attach `onFocus`/`onBlur` event handlers to manually manage custom focus rings (e.g., `boxShadow`) for keyboard navigation.
